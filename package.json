@@ -1,6 +1,6 @@
 {
   "name": "simpleitjs-ui",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "UI Framework based on simpleitjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,5 +26,8 @@
   "bugs": {
     "url": "https://github.com/siddhesh321995/simpleitjs-ui/issues"
   },
-  "homepage": "https://github.com/siddhesh321995/simpleitjs-ui#readme"
+  "homepage": "https://github.com/siddhesh321995/simpleitjs-ui#readme",
+  "dependencies": {
+    "simpleitjs": "^1.2.4"
+  }
 }

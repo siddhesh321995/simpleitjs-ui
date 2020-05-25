@@ -18,6 +18,7 @@
     "dist"
   ],
   "files": [
-    "index.ts"
+    "index.ts",
+    "ui-module.ts"
   ]
 }
