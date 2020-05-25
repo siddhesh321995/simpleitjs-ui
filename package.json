@@ -1,0 +1,30 @@
+{
+  "name": "simpleitjs-ui",
+  "version": "1.0.0",
+  "description": "UI Framework based on simpleitjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/siddhesh321995/simpleitjs-ui.git"
+  },
+  "keywords": [
+    "SimpleItJS",
+    "UI",
+    "Framework",
+    "Frontend",
+    "Light",
+    "Efficient",
+    "Typescript",
+    "Javascript"
+  ],
+  "author": "Siddhesh Kulkarni",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/siddhesh321995/simpleitjs-ui/issues"
+  },
+  "homepage": "https://github.com/siddhesh321995/simpleitjs-ui#readme"
+}
