@@ -21,6 +21,15 @@ const generateNxtId = () => {
 
 class UIModel {
   public _id: number = generateNxtId();
+  [id: string]: any;
+
+  constructor(model: any = {}) {
+    for (const key in model) {
+      if (model.hasOwnProperty(key)) {
+        this[key] = model[key];
+      }
+    }
+  }
 }
 
 class UIModuleOpts extends ModuleScope {
@@ -28,6 +37,9 @@ class UIModuleOpts extends ModuleScope {
   public templateHTML?: string;
   public templateURL?: string;
   public templateSelector?: string;
+  public templateString?: string;
+  public parentSelector?: string;
+  public parentElem?: Element;
 
   public model?: UIModel;
 
@@ -36,36 +48,97 @@ class UIModuleOpts extends ModuleScope {
     this.name = config.name;
     this.templateURL = config.templateURL;
     this.templateSelector = config.templateSelector;
-    this.model = config.model || new UIModel();
+    this.templateString = config.templateString;
+    this.parentSelector = config.parentSelector;
+    this.parentElem = config.parentElem;
+    if (config.model != void 0 && config.model instanceof UIModel) {
+      this.model = config.model
+    } else if (config.model != void 0 && typeof config.model === "object") {
+      this.model = new UIModel(config.model);
+    } else {
+      this.model = new UIModel();
+    }
   }
 }
 
 class SuperUI extends UIModuleOpts {
-  public Ajax?: Ajax = Module.get('Ajax') as Ajax;
+  public view?: Element;
+
+  private Ajax?: Ajax = Module.get('Ajax') as Ajax;
+  private alreadyRendered: boolean = false;
+  private templateReadyProm: PromisePackage<boolean> = new PromisePackage<boolean>();
+  private parentReadyProm: PromisePackage<boolean> = new PromisePackage<boolean>();
 
   constructor(config: UIModuleOpts = {}) {
     super(config);
   }
 
-  public static invoke(model: SuperUI, ...dependencies: any[]): SuperUI {
-    console.log('Super class invoked');
-    if (model.templateURL) {
-      model.Ajax?.get<string>(model.templateURL).then((strTemplate) => {
-        model.templateHTML = strTemplate;
+  public static invoke(module: SuperUI, ...dependencies: any[]): SuperUI {
+    if (module.templateURL) {
+      module.Ajax?.get<string>(module.templateURL).then((strTemplate) => {
+        module.templateHTML = strTemplate;
+        module.templateReadyProm.resolver();
       });
+    } else if (module.templateString) {
+      module.templateHTML = module.templateString;
+      module.templateReadyProm.resolver();
     }
-    return model;
+
+    if (module.parentElem === void 0 && module.parentSelector !== void 0) {
+      const elem = document.querySelector(module.parentSelector);
+      if (elem != null) {
+        module.parentElem = elem;
+        module.parentReadyProm.resolver();
+      }
+    }
+    module.renderToElem();
+    return module;
+  }
+
+  public renderToElem() {
+    Promise.all([this.parentReadyProm.promise, this.templateReadyProm.promise]).then(() => {
+      if (!this.alreadyRendered) {
+        this.alreadyRendered = true;
+        // console.log('TODO: Render model', this.model, 'with', this.templateHTML, 'at', this.parentElem);
+        if (this.parentElem) {
+          this.parentElem.innerHTML = this.parseTemplate();
+        }
+      }
+    });
+  }
+
+  private parseTemplate(): string {
+    let str = this.templateHTML;
+    for (const key in this.model) {
+      if (this.model.hasOwnProperty(key) && str) {
+        str = str.replace("{{" + key + "}}", this.model[key]);
+      }
+    }
+    return str as string;
   }
 }
 
 class UIModule extends ModuleClass {
-  constructor(name: string, opts: UIModuleOpts, ...dependencies: any[]) {
-    console.log('ui module initiated');
-    // const inst = new SuperUI(opts);
-    const params = [name, ...dependencies, opts, SuperUI];
+  constructor(name: string, opts: UIModuleOpts, MainClass: typeof SuperUI = SuperUI, ...dependencies: any[]) {
+    const params = [name, ...dependencies, opts, MainClass];
     super(...params);
   }
 }
+
+class PromisePackage<T> extends ModuleScope {
+  public resolver!: (value?: T | PromiseLike<T> | undefined) => void;
+  public rejector!: (reason?: any) => void;
+  public promise: Promise<T> = new Promise<T>((res, rej) => {
+    this.resolver = res;
+    this.rejector = rej;
+  });
+
+  public static invoke<T>(module: PromisePackage<T>): typeof PromisePackage {
+    return PromisePackage;
+  }
+}
+
+new ModuleClass('PromisePackage', PromisePackage);
 
 declare var module: any;
 
